@@ -19,7 +19,8 @@ This solution groups words that are **anagrams of each other**.
 * **Time:** O(n * k log k)
 
   * `n` = number of strings, `k` = max string length (sorting each string)
-* **Space:** O(n) — for storing the groups in the dictionary
+* **Space:** O(n * k)
+  * for storing the groups in the dictionary (worst case: all strings are different)
 
 ### Key Idea
 
