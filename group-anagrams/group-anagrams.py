@@ -3,8 +3,6 @@ class Solution:
         anagram_dict = {}
         for s in strs:
             key = "".join(sorted(s))
-            if key == "":
-                key = "0"
             if key in anagram_dict:
                 anagram_dict[key].append(s)
             else:
