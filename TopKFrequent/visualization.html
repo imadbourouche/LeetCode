@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top K Frequent Elements - Dynamic Visualizer</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --primary: #4a90e2;
+            --secondary: #6c757d;
+            --accent: #e67e22;
+            --highlight: #fff3cd;
+            --code-bg: #2d3436;
+            --uninit: #dfe6e9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .controls {
+            grid-column: 1 / -1;
+            background: var(--card);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+        }
+
+        button:disabled { background: var(--secondary); cursor: not-allowed; }
+        .btn-reset { background: #e74c3c; }
+
+        .code-panel {
+            background: var(--code-bg);
+            color: #dfe6e9;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .line { padding: 0 5px; border-left: 4px solid transparent; }
+        .line.active { background: #555; border-left: 4px solid var(--accent); color: white; }
+
+        .viz-panel {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .data-section { margin-bottom: 25px; }
+        .data-title { font-weight: bold; margin-bottom: 10px; color: var(--secondary); border-bottom: 1px solid #eee; }
+
+        .flex-box { display: flex; flex-wrap: wrap; gap: 10px; }
+        
+        .box {
+            border: 2px solid var(--primary);
+            padding: 10px;
+            border-radius: 5px;
+            min-width: 40px;
+            text-align: center;
+            background: white;
+        }
+
+        .uninitialized {
+            color: var(--secondary);
+            font-style: italic;
+            padding: 10px;
+            background: var(--uninit);
+            border-radius: 5px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .bucket-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
+        }
+
+        .bucket {
+            border: 1px dashed var(--secondary);
+            padding: 5px;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #fff;
+        }
+        .bucket-label { font-size: 11px; color: var(--secondary); margin-top: 4px; }
+
+        .highlight-item { background: var(--highlight) !important; transform: scale(1.05); border-color: var(--accent); }
+        
+        .status-msg {
+            margin-top: 10px;
+            font-weight: bold;
+            color: var(--accent);
+            min-height: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Algorithm Visualizer</h1>
+
+    <div class="controls">
+        <label>Nums: <input type="text" id="inputNums" value="1,1,1,2,2,3"></label>
+        <label>K: <input type="number" id="inputK" value="2" style="width: 50px;"></label>
+        <button onclick="init()" class="btn-reset">Initialize/Reset</button>
+        <button id="btnPrev" onclick="stepBack()">← Back</button>
+        <button id="btnPlay" onclick="togglePlay()">Play</button>
+        <button id="btnNext" onclick="stepForward()">Next →</button>
+    </div>
+
+    <div class="container">
+        <div class="code-panel" id="codeDisplay">
+            <div class="line" id="line0">def topKFrequent(nums, k):</div>
+            <div class="line" id="line1">&nbsp;&nbsp;&nbsp;&nbsp;count = {}</div>
+            <div class="line" id="line2">&nbsp;&nbsp;&nbsp;&nbsp;freq = [[] for i in range(len(nums) + 1)]</div>
+            <div class="line" id="line3">&nbsp;&nbsp;&nbsp;&nbsp;for num in nums:</div>
+            <div class="line" id="line4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count[num] = 1 + count.get(num, 0)</div>
+            <div class="line" id="line5">&nbsp;&nbsp;&nbsp;&nbsp;for num, cnt in count.items():</div>
+            <div class="line" id="line6">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq[cnt].append(num)</div>
+            <div class="line" id="line7">&nbsp;&nbsp;&nbsp;&nbsp;res = []</div>
+            <div class="line" id="line8">&nbsp;&nbsp;&nbsp;&nbsp;for i in range(len(freq) - 1, 0, -1):</div>
+            <div class="line" id="line9">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for n in freq[i]:</div>
+            <div class="line" id="line10">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res.append(n)</div>
+            <div class="line" id="line11">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if len(res) == k:</div>
+            <div class="line" id="line12">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return res</div>
+        </div>
+
+        <div class="viz-panel">
+            <div class="status-msg" id="status">Ready</div>
+
+            <div class="data-section">
+                <div class="data-title">Input Nums</div>
+                <div class="flex-box" id="numsDisplay"></div>
+            </div>
+
+            <div class="data-section">
+                <div class="data-title">Frequency Map (count)</div>
+                <div class="flex-box" id="countDisplay"></div>
+            </div>
+
+            <div class="data-section">
+                <div class="data-title">Buckets (freq)</div>
+                <div id="freqContainer"></div>
+            </div>
+
+            <div class="data-section">
+                <div class="data-title">Result (res)</div>
+                <div id="resContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let history = [];
+        let stepIndex = 0;
+        let isPlaying = false;
+        let playInterval = null;
+
+        function generateSteps(nums, k) {
+            let steps = [];
+            let count = null; // Uninitialized
+            let freq = null;  // Uninitialized
+            let res = null;   // Uninitialized
+
+            // Line 1: count = {}
+            count = {};
+            steps.push({ line: 1, count: {...count}, freq: null, res: null, msg: "Initialized empty dictionary 'count'" });
+
+            // Line 2: freq = [[] for i...]
+            freq = Array.from({ length: nums.length + 1 }, () => []);
+            steps.push({ line: 2, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: null, msg: "Initialized 'freq' buckets based on input length" });
+
+            // Loop: Fill count
+            for (let i = 0; i < nums.length; i++) {
+                let num = nums[i];
+                steps.push({ line: 3, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: null, msg: `Looping: Current number is ${num}`, highlightNum: i });
+                count[num] = (count[num] || 0) + 1;
+                steps.push({ line: 4, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: null, msg: `Updated count for ${num} to ${count[num]}`, highlightCount: num });
+            }
+
+            // Loop: Fill freq
+            let entries = Object.entries(count);
+            for (let [num, cnt] of entries) {
+                steps.push({ line: 5, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: null, msg: `Moving ${num} (count ${cnt}) to bucket` });
+                freq[cnt].push(Number(num));
+                steps.push({ line: 6, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: null, msg: `Appended ${num} to freq[${cnt}]`, highlightFreq: cnt });
+            }
+
+            // Line 7: res = []
+            res = [];
+            steps.push({ line: 7, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: [...res], msg: "Initialized empty result list" });
+
+            // Loop: extract top k
+            for (let i = freq.length - 1; i > 0; i--) {
+                steps.push({ line: 8, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: [...res], msg: `Checking bucket ${i} (highest freq first)`, highlightFreq: i });
+                for (let n of freq[i]) {
+                    steps.push({ line: 9, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: [...res], msg: `Found element ${n} in bucket ${i}` });
+                    res.push(n);
+                    steps.push({ line: 10, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: [...res], msg: `Added ${n} to result list` });
+                    steps.push({ line: 11, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: [...res], msg: `Is result size ${res.length} equal to k=${k}?` });
+                    
+                    if (res.length === k) {
+                        steps.push({ line: 12, count: {...count}, freq: JSON.parse(JSON.stringify(freq)), res: [...res], msg: `Success! Returning top ${k} elements.` });
+                        return steps;
+                    }
+                }
+            }
+            return steps;
+        }
+
+        function renderStep(index) {
+            const state = history[index];
+            if (!state) return;
+
+            // Code Line
+            document.querySelectorAll('.line').forEach(l => l.classList.remove('active'));
+            document.getElementById(`line${state.line}`).classList.add('active');
+
+            // Message
+            document.getElementById('status').innerText = state.msg;
+
+            // Input Nums
+            const numsInput = document.getElementById('inputNums').value.split(',').map(n => n.trim());
+            document.getElementById('numsDisplay').innerHTML = numsInput.map((n, i) => 
+                `<div class="box ${state.highlightNum === i ? 'highlight-item' : ''}">${n}</div>`
+            ).join('');
+
+            // Count Map
+            const countDiv = document.getElementById('countDisplay');
+            if (state.count === null) {
+                countDiv.innerHTML = '<div class="uninitialized">Not yet initialized</div>';
+            } else {
+                countDiv.innerHTML = Object.entries(state.count).map(([k, v]) => 
+                    `<div class="box ${state.highlightCount == k ? 'highlight-item' : ''}">${k}: ${v}</div>`
+                ).join('') || '<div class="uninitialized">{}</div>';
+            }
+
+            // Buckets
+            const freqDiv = document.getElementById('freqContainer');
+            if (state.freq === null) {
+                freqDiv.innerHTML = '<div class="uninitialized">Not yet initialized</div>';
+            } else {
+                freqDiv.innerHTML = `<div class="bucket-container">${state.freq.map((bucket, i) => `
+                    <div class="bucket ${state.highlightFreq == i ? 'highlight-item' : ''}">
+                        <div>${bucket.join(', ')}</div>
+                        <div class="bucket-label">idx: ${i}</div>
+                    </div>
+                `).join('')}</div>`;
+            }
+
+            // Result
+            const resDiv = document.getElementById('resContainer');
+            if (state.res === null) {
+                resDiv.innerHTML = '<div class="uninitialized">Not yet initialized</div>';
+            } else {
+                resDiv.innerHTML = `<div class="flex-box">${state.res.map(n => 
+                    `<div class="box" style="background: #2ecc71; color: white;">${n}</div>`
+                ).join('') || '<div class="uninitialized">[]</div>'}</div>`;
+            }
+
+            document.getElementById('btnPrev').disabled = (index === 0);
+            document.getElementById('btnNext').disabled = (index === history.length - 1);
+        }
+
+        function init() {
+            stopPlay();
+            const nums = document.getElementById('inputNums').value.split(',').filter(x => x.trim() !== "").map(Number);
+            const k = parseInt(document.getElementById('inputK').value);
+            history = generateSteps(nums, k);
+            stepIndex = 0;
+            renderStep(stepIndex);
+        }
+
+        function stepForward() {
+            if (stepIndex < history.length - 1) {
+                stepIndex++;
+                renderStep(stepIndex);
+            } else {
+                stopPlay();
+            }
+        }
+
+        function stepBack() {
+            if (stepIndex > 0) {
+                stepIndex--;
+                renderStep(stepIndex);
+            }
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                stopPlay();
+            } else {
+                isPlaying = true;
+                document.getElementById('btnPlay').innerText = "Pause";
+                playInterval = setInterval(stepForward, 600);
+            }
+        }
+
+        function stopPlay() {
+            isPlaying = false;
+            document.getElementById('btnPlay').innerText = "Play";
+            clearInterval(playInterval);
+        }
+
+        init();
+    </script>
+</body>
+</html>

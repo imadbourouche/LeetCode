@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Anagrams Visualizer</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #38bdf8;
+            --highlight: #22c55e;
+            --code-bg: #011627;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header & Controls */
+        header {
+            padding: 1rem 2rem;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            width: 250px;
+        }
+
+        button {
+            background: var(--accent);
+            color: var(--bg-color);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Layout */
+        main {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* Code Panel */
+        .code-panel {
+            background: var(--code-bg);
+            padding: 2rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            border-right: 1px solid var(--border);
+            position: relative;
+        }
+
+        .line {
+            display: block;
+            padding: 0 10px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            color: var(--text-dim);
+        }
+
+        .line.active {
+            background: #334155;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Visualization Panel */
+        .viz-panel {
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .status-msg {
+            background: #0ea5e922;
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            font-style: italic;
+            min-height: 1.5em;
+        }
+
+        .data-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-title {
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        /* Data Structures Styling */
+        .array-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .box {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 10px 15px;
+            border-radius: 8px;
+            min-width: 40px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .box.active {
+            border-color: var(--accent);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #38bdf844;
+        }
+
+        .map-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .map-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .map-key {
+            color: var(--accent);
+            font-family: monospace;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .uninitialized {
+            opacity: 0.3;
+            filter: grayscale(1);
+        }
+
+        .controls-footer {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 1rem;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="input-group">
+        <input type="text" id="strsInput" value='["eat", "tea", "tan", "ate", "nat", "bat"]'>
+        <button onclick="initVisualizer()">Reset & Load</button>
+    </div>
+    <div style="font-weight: bold; color: var(--accent);">Group Anagrams Visualizer</div>
+</header>
+
+<main>
+    <div class="code-panel" id="codePanel">
+        <div class="line" id="line-0">class Solution:</div>
+        <div class="line" id="line-1">&nbsp;&nbsp;def groupAnagrams(self, strs):</div>
+        <div class="line" id="line-2">&nbsp;&nbsp;&nbsp;&nbsp;anagram_dict = {}</div>
+        <div class="line" id="line-3">&nbsp;&nbsp;&nbsp;&nbsp;for s in strs:</div>
+        <div class="line" id="line-4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key = "".join(sorted(s))</div>
+        <div class="line" id="line-5">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if key in anagram_dict:</div>
+        <div class="line" id="line-6">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;anagram_dict[key].append(s)</div>
+        <div class="line" id="line-7">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else:</div>
+        <div class="line" id="line-8">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;anagram_dict[key] = [s]</div>
+        <div class="line" id="line-9">&nbsp;&nbsp;&nbsp;&nbsp;return list(anagram_dict.values())</div>
+    </div>
+
+    <div class="viz-panel">
+        <div class="status-msg" id="statusMsg">Click 'Next' to begin the step-by-step execution.</div>
+
+        <div class="data-section" id="inputSection">
+            <div class="section-title">Input: strs</div>
+            <div class="array-container" id="strsDisplay"></div>
+        </div>
+
+        <div class="data-section" id="varSection">
+            <div class="section-title">Current Variables</div>
+            <div class="array-container">
+                <div id="varS" class="box uninitialized">s: -</div>
+                <div id="varKey" class="box uninitialized">key: -</div>
+            </div>
+        </div>
+
+        <div class="data-section" id="dictSection">
+            <div class="section-title">Data Structure: anagram_dict</div>
+            <div class="map-container" id="dictDisplay">
+                <div class="uninitialized">Waiting for initialization...</div>
+            </div>
+        </div>
+        
+        <div class="data-section" id="resultSection">
+            <div class="section-title">Final Result</div>
+            <div id="resultDisplay" class="uninitialized">[]</div>
+        </div>
+    </div>
+</main>
+
+<div class="controls-footer">
+    <button onclick="prevStep()" id="prevBtn">Previous</button>
+    <button onclick="togglePlay()" id="playBtn">Play</button>
+    <button onclick="nextStep()" id="nextBtn">Next Step</button>
+</div>
+
+<script>
+    let states = [];
+    let currentStep = 0;
+    let isPlaying = false;
+    let playInterval = null;
+
+    function initVisualizer() {
+        const inputVal = document.getElementById('strsInput').value;
+        let strs;
+        try {
+            strs = JSON.parse(inputVal);
+        } catch (e) {
+            alert("Invalid Input. Please use JSON array format like ['a', 'b']");
+            return;
+        }
+
+        states = [];
+        currentStep = 0;
+        isPlaying = false;
+        clearInterval(playInterval);
+        
+        // Build History
+        generateHistory(strs);
+        renderState(0);
+    }
+
+    function generateHistory(strs) {
+        let dict = {};
+        let step = {
+            line: 2,
+            strs: [...strs],
+            dict: {},
+            s: null,
+            key: null,
+            activeIdx: -1,
+            msg: "Initializing empty dictionary 'anagram_dict'."
+        };
+        states.push(JSON.parse(JSON.stringify(step)));
+
+        for (let i = 0; i < strs.length; i++) {
+            let s = strs[i];
+            
+            // Loop Start
+            states.push({
+                line: 3, 
+                strs: [...strs], 
+                dict: JSON.parse(JSON.stringify(dict)), 
+                s: s, 
+                key: null, 
+                activeIdx: i,
+                msg: `Iterating through strs: current string is "${s}"`
+            });
+
+            // Sorting Key
+            let sortedKey = s.split('').sort().join('');
+            states.push({
+                line: 4, 
+                strs: [...strs], 
+                dict: JSON.parse(JSON.stringify(dict)), 
+                s: s, 
+                key: sortedKey, 
+                activeIdx: i,
+                msg: `Sorting "${s}" to create hash key: "${sortedKey}"`
+            });
+
+            // Check existence
+            states.push({
+                line: 5, 
+                strs: [...strs], 
+                dict: JSON.parse(JSON.stringify(dict)), 
+                s: s, 
+                key: sortedKey, 
+                activeIdx: i,
+                msg: `Checking if "${sortedKey}" exists in anagram_dict...`
+            });
+
+            if (dict[sortedKey]) {
+                dict[sortedKey].push(s);
+                states.push({
+                    line: 6, 
+                    strs: [...strs], 
+                    dict: JSON.parse(JSON.stringify(dict)), 
+                    s: s, 
+                    key: sortedKey, 
+                    activeIdx: i,
+                    msg: `Key found! Appending "${s}" to list for "${sortedKey}".`
+                });
+            } else {
+                states.push({
+                    line: 7, 
+                    strs: [...strs], 
+                    dict: JSON.parse(JSON.stringify(dict)), 
+                    s: s, 
+                    key: sortedKey, 
+                    activeIdx: i,
+                    msg: `Key not found. Falling into 'else' block.`
+                });
+                dict[sortedKey] = [s];
+                states.push({
+                    line: 8, 
+                    strs: [...strs], 
+                    dict: JSON.parse(JSON.stringify(dict)), 
+                    s: s, 
+                    key: sortedKey, 
+                    activeIdx: i,
+                    msg: `Created new list for key "${sortedKey}" with value ["${s}"].`
+                });
+            }
+        }
+
+        // Return values
+        states.push({
+            line: 9, 
+            strs: [...strs], 
+            dict: JSON.parse(JSON.stringify(dict)), 
+            s: null, 
+            key: null, 
+            activeIdx: -1,
+            msg: "Algorithm finished. Returning all dictionary values as a list of lists."
+        });
+    }
+
+    function renderState(index) {
+        const state = states[index];
+        if (!state) return;
+
+        // Highlight Code
+        document.querySelectorAll('.line').forEach(l => l.classList.remove('active'));
+        document.getElementById(`line-${state.line}`).classList.add('active');
+
+        // Update Message
+        document.getElementById('statusMsg').innerText = state.msg;
+
+        // Render Strs Input
+        const strsDisplay = document.getElementById('strsDisplay');
+        strsDisplay.innerHTML = '';
+        state.strs.forEach((word, i) => {
+            const div = document.createElement('div');
+            div.className = `box ${i === state.activeIdx ? 'active' : ''}`;
+            div.innerText = word;
+            strsDisplay.appendChild(div);
+        });
+
+        // Update Variables
+        const varS = document.getElementById('varS');
+        const varKey = document.getElementById('varKey');
+        
+        if (state.s) {
+            varS.innerText = `s: "${state.s}"`;
+            varS.classList.remove('uninitialized');
+        } else {
+            varS.innerText = `s: -`;
+            varS.classList.add('uninitialized');
+        }
+
+        if (state.key) {
+            varKey.innerText = `key: "${state.key}"`;
+            varKey.classList.remove('uninitialized');
+        } else {
+            varKey.innerText = `key: -`;
+            varKey.classList.add('uninitialized');
+        }
+
+        // Render Dict
+        const dictDisplay = document.getElementById('dictDisplay');
+        dictDisplay.innerHTML = '';
+        const keys = Object.keys(state.dict);
+        if (keys.length === 0) {
+            dictDisplay.innerHTML = '<div class="uninitialized">{}</div>';
+        } else {
+            keys.forEach(k => {
+                const card = document.createElement('div');
+                card.className = 'map-card';
+                card.innerHTML = `<div class="map-key">"${k}"</div><div>[${state.dict[k].map(v => `"${v}"`).join(', ')}]</div>`;
+                dictDisplay.appendChild(card);
+            });
+        }
+
+        // Final Result
+        const resDisplay = document.getElementById('resultDisplay');
+        if (state.line === 9) {
+            resDisplay.classList.remove('uninitialized');
+            resDisplay.innerText = JSON.stringify(Object.values(state.dict));
+        } else {
+            resDisplay.classList.add('uninitialized');
+            resDisplay.innerText = '[]';
+        }
+
+        // Button States
+        document.getElementById('prevBtn').disabled = index === 0;
+        document.getElementById('nextBtn').disabled = index === states.length - 1;
+    }
+
+    function nextStep() {
+        if (currentStep < states.length - 1) {
+            currentStep++;
+            renderState(currentStep);
+        } else {
+            stop();
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 0) {
+            currentStep--;
+            renderState(currentStep);
+        }
+    }
+
+    function togglePlay() {
+        if (isPlaying) {
+            stop();
+        } else {
+            isPlaying = true;
+            document.getElementById('playBtn').innerText = 'Pause';
+            playInterval = setInterval(nextStep, 800);
+        }
+    }
+
+    function stop() {
+        isPlaying = false;
+        document.getElementById('playBtn').innerText = 'Play';
+        clearInterval(playInterval);
+    }
+
+    // Initialize on load
+    window.onload = initVisualizer;
+</script>
+
+</body>
+</html>

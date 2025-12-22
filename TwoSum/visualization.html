@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Sum Algorithm Visualizer</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #38bdf8;
+            --highlight: #1e40af;
+            --success: #22c55e;
+            --code-bg: #011627;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header & Controls */
+        header {
+            padding: 1rem 2rem;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .inputs-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            background: var(--border);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        button:hover { background: #475569; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        button.primary { background: var(--accent); color: var(--bg-color); }
+        button.primary:hover { background: #7dd3fc; }
+
+        /* Main Layout */
+        main {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* Left Column: Code */
+        #code-panel {
+            background: var(--code-bg);
+            padding: 2rem;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            border-right: 1px solid var(--border);
+            position: relative;
+        }
+
+        .code-line {
+            display: block;
+            padding: 0 10px;
+            border-radius: 4px;
+            color: #d6deeb;
+            transition: background 0.2s;
+        }
+
+        .code-line.active {
+            background: var(--highlight);
+            color: white;
+        }
+
+        /* Right Column: Visualization */
+        #viz-panel {
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .viz-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Data Structure Styles */
+        .array-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .box {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .box.active { border-color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+        .box.found { border-color: var(--success); background: rgba(34, 197, 94, 0.1); }
+        .box .index { font-size: 10px; color: var(--text-dim); position: absolute; top: -18px; }
+
+        .map-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .map-item {
+            background: var(--bg-color);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .map-item span { color: var(--accent); font-weight: bold; }
+
+        .uninitialized { opacity: 0.3; filter: grayscale(1); }
+
+        /* Execution Log */
+        #log {
+            font-size: 1.1rem;
+            color: var(--accent);
+            min-height: 3em;
+        }
+
+        .var-badge {
+            display: inline-block;
+            background: var(--border);
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="inputs-group">
+        <label>Nums:</label>
+        <input type="text" id="numsInput" value="2, 7, 11, 15" placeholder="e.g. 2,7,11">
+        <label>Target:</label>
+        <input type="number" id="targetInput" value="9" style="width: 60px;">
+        <button onclick="reset()">Reset / Build</button>
+    </div>
+    
+    <div class="btn-group">
+        <button id="prevBtn" onclick="prevStep()">← Prev</button>
+        <button id="playBtn" class="primary" onclick="togglePlay()">Play</button>
+        <button id="nextBtn" onclick="nextStep()">Next →</button>
+    </div>
+</header>
+
+<main>
+    <div id="code-panel">
+        <span class="code-line" data-line="1">class Solution:</span>
+        <span class="code-line" data-line="2">&nbsp;&nbsp;&nbsp;&nbsp;def twoSum(self, nums, target):</span>
+        <span class="code-line" data-line="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;solutions = {}</span>
+        <span class="code-line" data-line="4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for i in range(len(nums)):</span>
+        <span class="code-line" data-line="5">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;current_element = nums[i]</span>
+        <span class="code-line" data-line="6">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if current_element in solutions:</span>
+        <span class="code-line" data-line="7">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return [solutions[current_element], i]</span>
+        <span class="code-line" data-line="8">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else:</span>
+        <span class="code-line" data-line="9">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;difference = target - current_element</span>
+        <span class="code-line" data-line="10">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;solutions[difference] = i</span>
+        <span class="code-line" data-line="11">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return []</span>
+    </div>
+
+    <div id="viz-panel">
+        <div class="viz-card">
+            <div class="card-title">Execution Log</div>
+            <div id="log">Press "Next" or "Play" to start.</div>
+        </div>
+
+        <div class="viz-card" id="vars-card">
+            <div class="card-title">Variables</div>
+            <div id="variables">
+                <span class="var-badge">i: <span id="var-i">-</span></span>
+                <span class="var-badge">current: <span id="var-curr">-</span></span>
+                <span class="var-badge">diff: <span id="var-diff">-</span></span>
+            </div>
+        </div>
+
+        <div class="viz-card">
+            <div class="card-title">Input Array (nums)</div>
+            <div class="array-container" id="nums-container"></div>
+        </div>
+
+        <div class="viz-card" id="map-card">
+            <div class="card-title">
+                Solutions Map 
+                <small style="text-transform: none;">(Key: Needed Complement | Value: Index)</small>
+            </div>
+            <div class="map-container" id="map-container"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+    let history = [];
+    let currentStep = -1;
+    let isPlaying = false;
+    let playInterval = null;
+
+    function generateHistory() {
+        const nums = document.getElementById('numsInput').value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+        const target = parseInt(document.getElementById('targetInput').value);
+        
+        const steps = [];
+        let solutions = {};
+        
+        // Step 0: Initial state
+        steps.push({ line: 2, i: null, curr: null, diff: null, map: {}, log: "Initializing function with inputs.", activeIdx: -1 });
+
+        // Step 1: Init Map
+        steps.push({ line: 3, i: null, curr: null, diff: null, map: {}, log: "Initializing empty dictionary 'solutions'.", activeIdx: -1 });
+
+        for (let i = 0; i < nums.length; i++) {
+            // Loop Start
+            steps.push({ line: 4, i, curr: null, diff: null, map: {...solutions}, log: `Loop iteration i = ${i}`, activeIdx: i });
+            
+            let current_element = nums[i];
+            steps.push({ line: 5, i, curr: current_element, diff: null, map: {...solutions}, log: `Accessing nums[${i}]: ${current_element}`, activeIdx: i });
+
+            if (current_element in solutions) {
+                steps.push({ line: 6, i, curr: current_element, diff: null, map: {...solutions}, log: `Checking map: ${current_element} IS a key! Found solution.`, activeIdx: i });
+                steps.push({ line: 7, i, curr: current_element, diff: null, map: {...solutions}, log: `Returning indices: [${solutions[current_element]}, ${i}]`, activeIdx: i, result: [solutions[current_element], i] });
+                return steps;
+            } else {
+                steps.push({ line: 6, i, curr: current_element, diff: null, map: {...solutions}, log: `Checking map: ${current_element} not found.`, activeIdx: i });
+                
+                let diff = target - current_element;
+                steps.push({ line: 9, i, curr: current_element, diff: diff, map: {...solutions}, log: `Calculating complement needed: ${target} - ${current_element} = ${diff}`, activeIdx: i });
+                
+                solutions[diff] = i;
+                steps.push({ line: 10, i, curr: current_element, diff: diff, map: {...solutions}, log: `Storing {${diff}: ${i}} in map.`, activeIdx: i });
+            }
+        }
+        
+        steps.push({ line: 11, i: null, curr: null, diff: null, map: {...solutions}, log: "No solution found. Returning empty list.", activeIdx: -1 });
+        return steps;
+    }
+
+    function renderStep(index) {
+        const state = history[index];
+        
+        // Highlight Code
+        document.querySelectorAll('.code-line').forEach(el => el.classList.remove('active'));
+        document.querySelector(`[data-line="${state.line}"]`).classList.add('active');
+
+        // Update Log
+        document.getElementById('log').innerText = state.log;
+
+        // Update Variables
+        document.getElementById('var-i').innerText = state.i !== null ? state.i : '-';
+        document.getElementById('var-curr').innerText = state.curr !== null ? state.curr : '-';
+        document.getElementById('var-diff').innerText = state.diff !== null ? state.diff : '-';
+
+        // Lazy Init Visuals
+        const varsCard = document.getElementById('vars-card');
+        state.line > 4 ? varsCard.classList.remove('uninitialized') : varsCard.classList.add('uninitialized');
+
+        const mapCard = document.getElementById('map-card');
+        state.line >= 3 ? mapCard.classList.remove('uninitialized') : mapCard.classList.add('uninitialized');
+
+        // Render Nums Array
+        const numsInput = document.getElementById('numsInput').value.split(',').map(n => n.trim());
+        const numsContainer = document.getElementById('nums-container');
+        numsContainer.innerHTML = '';
+        numsInput.forEach((val, idx) => {
+            const box = document.createElement('div');
+            box.className = 'box';
+            if (idx === state.activeIdx) box.classList.add('active');
+            if (state.result && state.result.includes(idx)) box.classList.add('found');
+            box.innerHTML = `<span class="index">${idx}</span>${val}`;
+            numsContainer.appendChild(box);
+        });
+
+        // Render Map
+        const mapContainer = document.getElementById('map-container');
+        mapContainer.innerHTML = '';
+        for (let [key, val] of Object.entries(state.map)) {
+            const item = document.createElement('div');
+            item.className = 'map-item';
+            item.innerHTML = `Key: <span>${key}</span> ⮕ Idx: ${val}`;
+            mapContainer.appendChild(item);
+        }
+
+        // Control button states
+        document.getElementById('prevBtn').disabled = index <= 0;
+        document.getElementById('nextBtn').disabled = index >= history.length - 1;
+    }
+
+    function nextStep() {
+        if (currentStep < history.length - 1) {
+            currentStep++;
+            renderStep(currentStep);
+        } else {
+            pause();
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 0) {
+            currentStep--;
+            renderStep(currentStep);
+        }
+    }
+
+    function togglePlay() {
+        if (isPlaying) pause();
+        else play();
+    }
+
+    function play() {
+        isPlaying = true;
+        document.getElementById('playBtn').innerText = 'Pause';
+        playInterval = setInterval(nextStep, 800);
+    }
+
+    function pause() {
+        isPlaying = false;
+        document.getElementById('playBtn').innerText = 'Play';
+        clearInterval(playInterval);
+    }
+
+    function reset() {
+        pause();
+        history = generateHistory();
+        currentStep = 0;
+        renderStep(currentStep);
+    }
+
+    // Initial Build
+    reset();
+</script>
+
+</body>
+</html>
