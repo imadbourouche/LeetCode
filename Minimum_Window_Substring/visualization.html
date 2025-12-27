@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Solution Visualizer</title>
+    <style>
+        :root {
+            --bg-dark: #1e1e1e;
+            --bg-light: #f5f7fa;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --text-main: #334155;
+            --code-bg: #2d2d2d;
+            --highlight: rgba(59, 130, 246, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: var(--bg-light);
+            color: var(--text-main);
+        }
+
+        header {
+            padding: 1rem 2rem;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-group { display: flex; gap: 10px; align-items: center; }
+        input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; }
+
+        .controls { display: flex; gap: 8px; }
+        button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        button.primary { background: var(--accent); color: white; }
+        button.secondary { background: #e2e8f0; color: var(--text-main); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        main { display: grid; grid-template-columns: 450px 1fr; flex-grow: 1; overflow: hidden; }
+
+        #code-panel {
+            background: var(--bg-dark);
+            color: #d4d4d4;
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-y: auto;
+        }
+
+        .line { padding: 0 8px; border-radius: 3px; white-space: pre; border-left: 3px solid transparent; }
+        .line.active { background: var(--highlight); color: white; border-left: 3px solid var(--accent); }
+
+        #viz-panel { padding: 2rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .viz-section { background: white; padding: 1.2rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 1rem; font-weight: 800; }
+
+        .string-container { display: flex; gap: 4px; font-family: monospace; padding-bottom: 25px; }
+        .char-box {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            border: 2px solid #e2e8f0; border-radius: 4px; position: relative; font-weight: bold; transition: all 0.2s;
+        }
+        .char-box.in-window { background: #dbeafe; border-color: var(--accent); }
+        .char-box.target { border-bottom: 4px solid var(--warning); }
+
+        .pointer { position: absolute; font-size: 11px; font-weight: 900; bottom: -22px; white-space: nowrap; }
+        .pointer.l { color: #ef4444; }
+        .pointer.r { color: var(--accent); }
+
+        .ds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .map-box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; min-height: 50px; }
+        .map-entry { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f1f5f9; }
+        
+        .uninit-mask { color: #94a3b8; font-style: italic; font-size: 13px; }
+
+        #status-log { background: #1e293b; color: #f8fafc; padding: 15px; border-radius: 8px; font-size: 14px; min-height: 45px; }
+        .stat-val { font-weight: bold; color: var(--accent); margin: 0 4px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="input-group">
+        <label>S: <input type="text" id="inputS" value="ADOBECODEBANC" maxlength="14"></label>
+        <label>T: <input type="text" id="inputT" value="ABC" maxlength="5"></label>
+        <button class="secondary" onclick="reset()">Reset</button>
+    </div>
+    <div class="controls">
+        <button class="secondary" id="prevBtn" onclick="step(-1)">Back</button>
+        <button class="primary" id="playBtn" onclick="togglePlay()">Play</button>
+        <button class="secondary" id="nextBtn" onclick="step(1)">Next</button>
+    </div>
+</header>
+
+<main>
+    <div id="code-panel">
+        <div class="line" id="line-2">l = r = 0</div>
+        <div class="line" id="line-3">count_t = Counter(t)</div>
+        <div class="line" id="line-4">have, need = 0, len(count_t)</div>
+        <div class="line" id="line-5">window_counts = {}</div>
+        <div class="line" id="line-6">min_len, min_window = float("inf"), ""</div>
+        <div class="line" id="line-7">for r in range(len(s)):</div>
+        <div class="line" id="line-8">    if s[r] in count_t:</div>
+        <div class="line" id="line-9">        window_counts[s[r]] = window_counts.get(s[r], 0) + 1</div>
+        <div class="line" id="line-10">        if window_counts[s[r]] == count_t[s[r]]:</div>
+        <div class="line" id="line-11">            have += 1</div>
+        <div class="line" id="line-12">    while have == need:</div>
+        <div class="line" id="line-13">        if (r - l + 1) < min_len:</div>
+        <div class="line" id="line-14">            min_len = r - l + 1</div>
+        <div class="line" id="line-15">            min_window = s[l:r+1]</div>
+        <div class="line" id="line-16">        if s[l] in window_counts:</div>
+        <div class="line" id="line-17">            window_counts[s[l]] -= 1</div>
+        <div class="line" id="line-18">            if window_counts[s[l]] < count_t[s[l]]:</div>
+        <div class="line" id="line-19">                have -= 1</div>
+        <div class="line" id="line-20">        l += 1</div>
+        <div class="line" id="line-21">return min_window</div>
+    </div>
+
+    <div id="viz-panel">
+        <div class="viz-section">
+            <div class="section-title">Sliding Window (S)</div>
+            <div id="string-viz" class="string-container"></div>
+        </div>
+
+        <div class="ds-grid">
+            <div class="viz-section">
+                <div class="section-title">Required (count_t)</div>
+                <div id="count-t-viz" class="map-box"></div>
+            </div>
+            <div class="viz-section">
+                <div class="section-title">In Window (window_counts)</div>
+                <div id="window-counts-viz" class="map-box"></div>
+            </div>
+        </div>
+
+        <div class="viz-section">
+            <div class="section-title">Algorithm State</div>
+            <div style="display: flex; gap: 2rem; font-size: 14px;">
+                <div>HAVE: <span id="stat-have" class="stat-val">0</span> / <span id="stat-need">0</span></div>
+                <div>MIN LEN: <span id="stat-min-len" class="stat-val">∞</span></div>
+                <div>RESULT: <span id="stat-result" class="stat-val">""</span></div>
+            </div>
+        </div>
+
+        <div id="status-log">Ready to start...</div>
+    </div>
+</main>
+
+<script>
+    let states = [];
+    let currentStepIndex = 0;
+    let isPlaying = false;
+    let playInterval;
+
+    function generateStates() {
+        const s = document.getElementById('inputS').value;
+        const t = document.getElementById('inputT').value;
+        const history = [];
+        
+        const pushState = (line, v, msg) => {
+            history.push({
+                line, msg, s, t,
+                vars: JSON.parse(JSON.stringify(v))
+            });
+        };
+
+        let v = {
+            l: 0, r: 0, count_t: {}, window_counts: {},
+            have: 0, need: 0, min_len: Infinity, min_window: "",
+            init: {} // Tracks what is initialized
+        };
+
+        v.init.l = v.init.r = true;
+        pushState(2, v, "Initialized pointers L and R to 0.");
+
+        for (let char of t) v.count_t[char] = (v.count_t[char] || 0) + 1;
+        v.init.count_t = true;
+        pushState(3, v, "Created frequency map for target string T.");
+
+        v.need = Object.keys(v.count_t).length;
+        v.init.have = v.init.need = true;
+        pushState(4, v, `We need ${v.need} unique characters to reach their target frequencies.`);
+
+        v.init.window_counts = true;
+        pushState(5, v, "Initialized empty window frequency map.");
+
+        v.init.min_len = v.init.min_window = true;
+        pushState(6, v, "Initialized result trackers.");
+
+        for (let r = 0; r < s.length; r++) {
+            v.r = r;
+            pushState(7, v, `Iteration: Moving Right pointer to index ${r} ('${s[r]}')`);
+
+            pushState(8, v, `Checking if '${s[r]}' is in our target characters.`);
+            if (s[r] in v.count_t) {
+                v.window_counts[s[r]] = (v.window_counts[s[r]] || 0) + 1;
+                pushState(9, v, `Updated window count for '${s[r]}' to ${v.window_counts[s[r]]}.`);
+
+                if (v.window_counts[s[r]] === v.count_t[s[r]]) {
+                    v.have += 1;
+                    pushState(11, v, `Frequency for '${s[r]}' fully met! HAVE is now ${v.have}.`);
+                }
+            }
+
+            while (v.have === v.need) {
+                pushState(12, v, "Window is VALID (contains all required characters).");
+                if ((r - v.l + 1) < v.min_len) {
+                    v.min_len = r - v.l + 1;
+                    v.min_window = s.substring(v.l, r + 1);
+                    pushState(15, v, `New minimum window found: "${v.min_window}" (Length ${v.min_len})`);
+                }
+
+                pushState(16, v, `Shrinking: checking Left pointer at index ${v.l} ('${s[v.l]}')`);
+                if (s[v.l] in v.window_counts) {
+                    v.window_counts[s[v.l]] -= 1;
+                    pushState(17, v, `Removed '${s[v.l]}' from window count.`);
+                    if (v.window_counts[s[v.l]] < v.count_t[s[v.l]]) {
+                        v.have -= 1;
+                        pushState(19, v, `HAVE decreased to ${v.have}. Window is no longer valid.`);
+                    }
+                }
+                v.l += 1;
+                v.r = r; // Ensure r stays current
+                pushState(20, v, `Incremented L to ${v.l}.`);
+            }
+        }
+        pushState(21, v, `Final Result: "${v.min_window}"`);
+        return history;
+    }
+
+    function renderMap(elementId, data, targetData, isInit) {
+        const el = document.getElementById(elementId);
+        el.innerHTML = '';
+        if (!isInit) {
+            el.innerHTML = '<span class="uninit-mask">Uninitialized</span>';
+            return;
+        }
+        const keys = Object.keys(data);
+        if (keys.length === 0) el.innerHTML = '<span class="uninit-mask">{ }</span>';
+        
+        keys.forEach(key => {
+            const row = document.createElement('div');
+            row.className = 'map-entry';
+            const satisfied = targetData && data[key] >= targetData[key];
+            if (satisfied) row.style.color = 'var(--success)';
+            row.innerHTML = `<span>'${key}'</span><span>${data[key]}</span>`;
+            el.appendChild(row);
+        });
+    }
+
+    function renderStep() {
+        const { vars, line, msg, s, t } = states[currentStepIndex];
+
+        // Code Highlight
+        document.querySelectorAll('.line').forEach(el => el.classList.remove('active'));
+        document.getElementById(`line-${line}`)?.classList.add('active');
+
+        // Status
+        document.getElementById('status-log').innerHTML = msg;
+
+        // Metrics
+        document.getElementById('stat-have').innerText = vars.init.have ? vars.have : "?";
+        document.getElementById('stat-need').innerText = vars.init.need ? vars.need : "?";
+        document.getElementById('stat-min-len').innerText = vars.min_len === Infinity ? "∞" : vars.min_len;
+        document.getElementById('stat-result').innerText = vars.min_window === "" ? '""' : `"${vars.min_window}"`;
+
+        // String Rendering
+        const strCont = document.getElementById('string-viz');
+        strCont.innerHTML = '';
+        s.split('').forEach((char, i) => {
+            const box = document.createElement('div');
+            box.className = 'char-box';
+            if (vars.init.l && i >= vars.l && i <= vars.r) box.classList.add('in-window');
+            if (t.includes(char)) box.classList.add('target');
+            box.innerText = char;
+
+            if (vars.init.l && i === vars.l) box.innerHTML += `<span class="pointer l" style="left:0">L▲</span>`;
+            if (vars.init.r && i === vars.r) box.innerHTML += `<span class="pointer r" style="right:0">R▲</span>`;
+            
+            strCont.appendChild(box);
+        });
+
+        // Maps Rendering
+        renderMap('count-t-viz', vars.count_t, null, vars.init.count_t);
+        renderMap('window-counts-viz', vars.window_counts, vars.count_t, vars.init.window_counts);
+
+        // Buttons
+        document.getElementById('prevBtn').disabled = currentStepIndex === 0;
+        document.getElementById('nextBtn').disabled = currentStepIndex === states.length - 1;
+    }
+
+    function step(n) {
+        currentStepIndex = Math.max(0, Math.min(states.length - 1, currentStepIndex + n));
+        renderStep();
+    }
+
+    function togglePlay() {
+        isPlaying = !isPlaying;
+        const btn = document.getElementById('playBtn');
+        if (isPlaying) {
+            btn.innerText = "Pause";
+            playInterval = setInterval(() => {
+                if (currentStepIndex < states.length - 1) step(1);
+                else togglePlay();
+            }, 600);
+        } else {
+            btn.innerText = "Play";
+            clearInterval(playInterval);
+        }
+    }
+
+    function reset() {
+        currentStepIndex = 0;
+        isPlaying = false;
+        clearInterval(playInterval);
+        document.getElementById('playBtn').innerText = "Play";
+        states = generateStates();
+        renderStep();
+    }
+
+    states = generateStates();
+    renderStep();
+</script>
+
+</body>
+</html>
