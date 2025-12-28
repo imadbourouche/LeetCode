@@ -1,3 +1,4 @@
+from typing import List
 class Solution:
     def binary_search(self, arr, target, l, r):
         while l <= r:
@@ -31,5 +32,5 @@ class Solution:
 
 solution = Solution()
 input = [4,5,6,7,0,1,2]
-for target in range(0, 10):
-    print(target, solution.search(input, target)) 
+target = 1
+print(target, solution.search(input, target)) 
