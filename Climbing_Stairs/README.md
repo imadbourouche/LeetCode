@@ -6,15 +6,15 @@ You are climbing a staircase. It takes `n` steps to reach the top. Each time you
 
 ## Approach (recursion with memoization)
 
-* Use **recursive function** `recv(current, steps)` to explore all possible paths (a decision tree).
+* Use **recursive function** `recv(current)` to explore all possible paths (a decision tree).
 * **Memoization** with a global map `memo` to store results of subproblems and avoid redundant computation.
 * **Base cases**:
   * If `current == N`, return 1 (we found a solution or a path).
   * If `current > N`, return 0 (the path will not lead to a solution).
 
-* **Recursive step**: sum the results of taking 1 step or 2 steps: `recv(current + 1, 1) + recv(current + 2, 2)`
+* **Recursive step**: sum the results of taking 1 step or 2 steps: `recv(current + 1) + recv(current + 2)`
 
 ## Complexity
 
-* **Time Complexity:** `O(n)` – each step from `0` to `N` is computed once.
+* **Time Complexity:** `O(n)` – each step from `0` to `N` is computed once (without memoziation it will be `O(2^n)`).
 * **Space Complexity:** `O(n)` – recursion stack + memoization map.
